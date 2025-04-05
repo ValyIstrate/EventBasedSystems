@@ -1,0 +1,23 @@
+meta {
+  name: Publish API
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8080/api/publish?numberOfSubs=1000000&numberOfPubs=1000000&cityRate=90&tempRate=30&rainRate=20&windRate=35&directionRate=60&dateRate=50&isParallel=false
+  body: none
+  auth: none
+}
+
+params:query {
+  numberOfSubs: 1000000
+  numberOfPubs: 1000000
+  cityRate: 90
+  tempRate: 30
+  rainRate: 20
+  windRate: 35
+  directionRate: 60
+  dateRate: 50
+  isParallel: false
+}
