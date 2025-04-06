@@ -10,7 +10,7 @@ import java.time.Instant;
 @Service
 @Slf4j
 public class PublisherService {
-    public PublisherRunResultDto runNonParallelGeneration(int numberOfSubs, int numberOfPubs, int cityRate,
+    public PublisherRunResultDto runGeneration(int numberOfSubs, int numberOfPubs, int cityRate,
                                                           int tempRate, int rainRate, int windRate, int directionRate,
                                                           int dateRate, boolean isParallel) {
 
@@ -29,8 +29,8 @@ public class PublisherService {
 
         Duration duration = Duration.between(start, end);
         long resultTimeMillis = duration.toMillis();
-
-        log.info("Generation took {} ms", resultTimeMillis);
+        System.out.println("Generation took " + resultTimeMillis + " ms");
+      //  log.info("Generation took {} ms", resultTimeMillis);
 
         return new PublisherRunResultDto(
                 isParallel ? "PARALLEL" : "NON-PARALLEL",
