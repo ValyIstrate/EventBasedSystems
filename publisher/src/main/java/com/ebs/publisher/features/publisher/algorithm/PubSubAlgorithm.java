@@ -3,6 +3,7 @@ package com.ebs.publisher.features.publisher.algorithm;
 import com.ebs.publisher.features.publisher.models.Publication;
 import com.ebs.publisher.features.publisher.models.Subscription;
 import com.ebs.publisher.features.publisher.utils.Utils;
+import com.ebs.publisher.features.publisher.workers.PublisherGeneratorThread;
 import com.ebs.publisher.features.publisher.workers.SubscriptionGenerator;
 import lombok.extern.slf4j.Slf4j;
 
@@ -80,8 +81,35 @@ public class PubSubAlgorithm {
         }
     }
 
+
     private void generateParallelPublications() {
-        return;
+
+        int limitPubs = 1000;
+        int countThreads = numberOfPubs <= limitPubs ? 1 : numberOfPubs / limitPubs + 1;
+
+        List<PublisherGeneratorThread> publisherGeneratorThreads = new ArrayList<>();
+        for(int i = 0; i < countThreads; i++){
+            if (i == countThreads - 1 && numberOfPubs != limitPubs) {
+                limitPubs = numberOfPubs % limitPubs;
+            }
+
+
+            PublisherGeneratorThread thread = new PublisherGeneratorThread(limitPubs);
+            publisherGeneratorThreads.add(thread);
+            thread.start();
+        }
+        for(PublisherGeneratorThread thread : publisherGeneratorThreads){
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        for (PublisherGeneratorThread thread : publisherGeneratorThreads){
+            generatedPublications.addAll(thread.getPublications());
+        }
+
+
     }
 
     private void generateNonParallelPublications() {
