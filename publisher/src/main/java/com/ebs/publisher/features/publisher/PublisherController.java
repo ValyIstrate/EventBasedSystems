@@ -11,11 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/publish")
-@RequiredArgsConstructor
 public class PublisherController {
 
     private final PublisherService publisherService;
-
+    public PublisherController(PublisherService publisherService) {
+        this.publisherService = publisherService;
+    }
     @PostMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PublisherRunResultDto> runNonParallelMessageGeneration(
             @RequestParam("numberOfSubs") int numberOfSubs,
@@ -29,7 +30,7 @@ public class PublisherController {
             @RequestParam("isParallel") boolean isParallel
     ) {
         return new ResponseEntity<>(
-                publisherService.runNonParallelGeneration(numberOfSubs, numberOfPubs, cityRate, tempRate,
+                publisherService.runGeneration(numberOfSubs, numberOfPubs, cityRate, tempRate,
                         rainRate, windRate, directionRate, dateRate, isParallel),
                 HttpStatus.OK
         );

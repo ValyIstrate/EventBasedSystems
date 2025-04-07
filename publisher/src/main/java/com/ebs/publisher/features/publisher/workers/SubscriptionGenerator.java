@@ -16,7 +16,7 @@ import java.util.stream.IntStream;
 import static com.ebs.publisher.features.publisher.algorithm.PubSubAlgorithm.minimumCity;
 
 @Getter
-public class NonParallelSubscriptionGenerator {
+public class SubscriptionGenerator {
 
     private int rate;
     private String metadata;
@@ -26,7 +26,7 @@ public class NonParallelSubscriptionGenerator {
     private static final List<String> EQ_OPERATOR = List.of("=", "!=");
     private static final List<String> NUM_OPERATORS = List.of("<", "<=", "=", ">", ">=");
 
-    public NonParallelSubscriptionGenerator(int rate, String metadata, int numberOfSubs) {
+    public SubscriptionGenerator(int rate, String metadata, int numberOfSubs) {
         this.rate = rate;
         this.metadata = metadata;
         this.numberOfSubs = numberOfSubs;
@@ -83,7 +83,7 @@ public class NonParallelSubscriptionGenerator {
         String directionOperator = EQ_OPERATOR.get(random.nextInt(EQ_OPERATOR.size()));
         subscription.addOperator(directionOperator);
         subscription.addInfo(metadata, direction);
-        subscription.addInfo(metadata, directionOperator);
+//        subscription.addInfo(metadata, directionOperator);
         subscriptions.add(subscription);
     }
 
@@ -106,4 +106,10 @@ public class NonParallelSubscriptionGenerator {
         subscription.addInfo(metadata, city);
         subscriptions.add(subscription);
     }
+
+    public List<Subscription> getSubscriptions() {
+        return this.subscriptions;
+    }
+
+
 }

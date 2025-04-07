@@ -3,7 +3,8 @@ package com.ebs.publisher.features.publisher.algorithm;
 import com.ebs.publisher.features.publisher.models.Publication;
 import com.ebs.publisher.features.publisher.models.Subscription;
 import com.ebs.publisher.features.publisher.utils.Utils;
-import com.ebs.publisher.features.publisher.workers.NonParallelSubscriptionGenerator;
+import com.ebs.publisher.features.publisher.workers.PublisherGeneratorThread;
+import com.ebs.publisher.features.publisher.workers.SubscriptionGenerator;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedWriter;
@@ -80,8 +81,35 @@ public class PubSubAlgorithm {
         }
     }
 
+
     private void generateParallelPublications() {
-        return;
+
+        int limitPubs = 1000;
+        int countThreads = numberOfPubs <= limitPubs ? 1 : numberOfPubs / limitPubs + 1;
+
+        List<PublisherGeneratorThread> publisherGeneratorThreads = new ArrayList<>();
+        for(int i = 0; i < countThreads; i++){
+            if (i == countThreads - 1 && numberOfPubs != limitPubs) {
+                limitPubs = numberOfPubs % limitPubs;
+            }
+
+
+            PublisherGeneratorThread thread = new PublisherGeneratorThread(limitPubs);
+            publisherGeneratorThreads.add(thread);
+            thread.start();
+        }
+        for(PublisherGeneratorThread thread : publisherGeneratorThreads){
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        for (PublisherGeneratorThread thread : publisherGeneratorThreads){
+            generatedPublications.addAll(thread.getPublications());
+        }
+
+
     }
 
     private void generateNonParallelPublications() {
@@ -90,117 +118,109 @@ public class PubSubAlgorithm {
         }
     }
 
-    private List<String> generateParallelSubscriptions() {
-        return List.of();
-    }
-
-    private List<String> generateNonParallelSubscriptions() {
+    private void combineGeneratedSubscriptions(List<SubscriptionGenerator> generators) {
         Random random = new Random();
-
-        List<String> metadataKeys = Utils.getMetadataKeys();
-        List<Integer> rates = List.of(cityRate, tempRate, rainRate, windRate, directionRate, dateRate);
-
-        List<NonParallelSubscriptionGenerator> availableGenerators = new ArrayList<>();
-
-        IntStream.range(0, metadataKeys.size()).forEach(i -> {
-            NonParallelSubscriptionGenerator generator = new NonParallelSubscriptionGenerator(
-                    rates.get(i),
-                    metadataKeys.get(i),
-                    numberOfSubs);
-
-            availableGenerators.add(generator);
-            generator.generateSubs();
-        });
-
         AtomicInteger subCount = new AtomicInteger(0);
-        availableGenerators.forEach(generator -> {
+
+        generators.forEach(generator -> {
             var generatedSubs = generator.getSubscriptions();
+
             if (generatedSubs.size() + subCount.get() <= numberOfSubs) {
                 generatedSubscriptions.addAll(generatedSubs);
                 subCount.addAndGet(generatedSubs.size());
-                return;
+            } else {
+                generatedSubs.forEach(sub -> {
+                    if (subCount.get() < numberOfSubs) {
+                        generatedSubscriptions.add(sub);
+                        subCount.incrementAndGet();
+                    } else {
+                        AtomicBoolean okFlag = new AtomicBoolean(false);
+                        while (!okFlag.get()) {
+                            int randIndex = random.nextInt(generatedSubscriptions.size());
+                            Subscription randSub = generatedSubscriptions.get(randIndex);
+
+                            sub.getInfo().keySet().forEach(key -> {
+                                if (!randSub.getInfo().containsKey(key)) {
+                                    randSub.addInfo(key, sub.getInfo().get(key));
+                                    randSub.addOperator(sub.getOperator().get(0));
+                                    okFlag.set(true);
+                                }
+                            });
+                        }
+                    }
+                });
             }
+        });
+    }
 
-            generatedSubs.forEach(sub -> {
-               if (subCount.get() < numberOfSubs) {
-                   generatedSubscriptions.add(sub);
-                   subCount.incrementAndGet();
-               } else {
-                   AtomicBoolean okFlag = new AtomicBoolean(false);
-                   while (!okFlag.get()) {
-                       int randIndex = random.nextInt(generatedSubscriptions.size());
-                       Subscription randSub = generatedSubscriptions.get(randIndex);
+    private List<String> generateSubscriptionStats(int totalSubs) {
+        List<String> metadataKeys = Utils.getMetadataKeys(); // city, temp, etc.
+        List<String> messages = new ArrayList<>();
 
-                       sub.getInfo().keySet().forEach(key -> {
-                           if (!randSub.getInfo().containsKey(key)) {
-                               randSub.addInfo(key, sub.getInfo().get(key));
-                               randSub.addOperator(sub.getOperator().get(0));
-                               okFlag.set(true);
-                           }
-                       });
-                   }
-               }
-            });
+        for (String key : metadataKeys) {
+            long count = generatedSubscriptions.stream()
+                    .filter(sub -> sub.getInfo().containsKey(key))
+                    .count();
+            String msg = String.format("Number of subs containing the %s field: %d -> %.2f%%",
+                    key, count, (double) count / totalSubs * 100);
+            System.out.println(msg);
+            messages.add(msg);
+        }
+
+        return messages;
+    }
+
+    private List<String> generateNonParallelSubscriptions() {
+        List<String> metadataKeys = Utils.getMetadataKeys();
+        List<Integer> rates = List.of(cityRate, tempRate, rainRate, windRate, directionRate, dateRate);
+
+        List<SubscriptionGenerator> generators = new ArrayList<>();
+
+        IntStream.range(0, metadataKeys.size()).forEach(i -> {
+            SubscriptionGenerator generator = new SubscriptionGenerator(
+                    rates.get(i), metadataKeys.get(i), numberOfSubs
+            );
+            generators.add(generator);
+            generator.generateSubs();
         });
 
-        Long citySubCount = generatedSubscriptions.stream()
-                .filter(sub -> sub.getInfo().containsKey("city"))
-                .count();
+        combineGeneratedSubscriptions(generators);
 
-        Long tempSubCount = generatedSubscriptions.stream()
-                .filter(sub -> sub.getInfo().containsKey("temp"))
-                .count();
-
-        Long rainSubCount = generatedSubscriptions.stream()
-                .filter(sub -> sub.getInfo().containsKey("rain"))
-                .count();
-
-        Long windSubCount = generatedSubscriptions.stream()
-                .filter(sub -> sub.getInfo().containsKey("wind"))
-                .count();
-
-        Long directionSubCount = generatedSubscriptions.stream()
-                .filter(sub -> sub.getInfo().containsKey("direction"))
-                .count();
-
-        Long dateSubCount = generatedSubscriptions.stream()
-                .filter(sub -> sub.getInfo().containsKey("date"))
-                .count();
-
-        String citySubMessage = String.format("Number of subs containing the city field: %d -> %.2f%%",
-                citySubCount, (double) citySubCount / subCount.get() * 100);
-
-        String tempSubMessage = String.format("Number of subs containing the temp field: %d -> %.2f%%",
-                tempSubCount, (double) tempSubCount / subCount.get() * 100);
-
-        String rainSubMessage = String.format("Number of subs containing the rain field: %d -> %.2f%%",
-                rainSubCount, (double) rainSubCount / subCount.get() * 100);
-
-        String windSubMessage = String.format("Number of subs containing the wind field: %d -> %.2f%%",
-                windSubCount, (double) windSubCount / subCount.get() * 100);
-
-        String directionSubMessage = String.format("Number of subs containing the direction field: %d -> %.2f%%",
-                directionSubCount, (double) directionSubCount / subCount.get() * 100);
-
-        String dateSubMessage = String.format("Number of subs containing the date field: %d -> %.2f%%",
-                dateSubCount, (double) dateSubCount / subCount.get() * 100);
-
-        log.info(citySubMessage);
-        log.info(tempSubMessage);
-        log.info(rainSubMessage);
-        log.info(windSubMessage);
-        log.info(directionSubMessage);
-        log.info(dateSubMessage);
-
-        return List.of(
-                citySubMessage,
-                tempSubMessage,
-                rainSubMessage,
-                windSubMessage,
-                directionSubMessage,
-                dateSubMessage
-        );
+        return generateSubscriptionStats(numberOfSubs);
     }
+
+    private List<String> generateParallelSubscriptions() {
+        List<String> metadataKeys = Utils.getMetadataKeys();
+        List<Integer> rates = List.of(cityRate, tempRate, rainRate, windRate, directionRate, dateRate);
+
+        List<SubscriptionGenerator> generators = new ArrayList<>();
+        List<Thread> threads = new ArrayList<>();
+
+        IntStream.range(0, metadataKeys.size()).forEach(i -> {
+            SubscriptionGenerator generator = new SubscriptionGenerator(
+                    rates.get(i), metadataKeys.get(i), numberOfSubs
+            );
+            generators.add(generator);
+            Thread t = new Thread(generator::generateSubs);
+            threads.add(t);
+            t.start();
+        });
+
+        threads.forEach(t -> {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        combineGeneratedSubscriptions(generators);
+
+        return generateSubscriptionStats(numberOfSubs);
+    }
+
+
+
 
     public void createFilesContainingData(String filePath, List<?> dataList) {
         File file = new File(filePath);
@@ -214,7 +234,8 @@ public class PubSubAlgorithm {
                 }
             }
         } catch (IOException ex) {
-            log.error("Failed to create files for created entities: {}", ex.getMessage());
+            System.out.println("Failed to create files for created entities: {}" + ex.getMessage());
+          //  log.error("Failed to create files for created entities: {}", ex.getMessage());
         }
     }
 
