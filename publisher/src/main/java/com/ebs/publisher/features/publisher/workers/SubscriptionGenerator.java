@@ -13,14 +13,14 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import static com.ebs.publisher.features.publisher.algorithm.PubSubAlgorithm.minimumCity;
+import static com.ebs.publisher.features.publisher.algorithm.PubSubGenerationAlgorithm.minimumCity;
 
 @Getter
 public class SubscriptionGenerator {
 
-    private int rate;
-    private String metadata;
-    private int numberOfSubs;
+    private final int rate;
+    private final String metadata;
+    private final int numberOfSubs;
     private List<Subscription> subscriptions;
 
     private static final List<String> EQ_OPERATOR = List.of("=", "!=");
@@ -83,7 +83,6 @@ public class SubscriptionGenerator {
         String directionOperator = EQ_OPERATOR.get(random.nextInt(EQ_OPERATOR.size()));
         subscription.addOperator(directionOperator);
         subscription.addInfo(metadata, direction);
-//        subscription.addInfo(metadata, directionOperator);
         subscriptions.add(subscription);
     }
 
@@ -106,10 +105,4 @@ public class SubscriptionGenerator {
         subscription.addInfo(metadata, city);
         subscriptions.add(subscription);
     }
-
-    public List<Subscription> getSubscriptions() {
-        return this.subscriptions;
-    }
-
-
 }
