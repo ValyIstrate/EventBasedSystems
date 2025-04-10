@@ -1,12 +1,9 @@
 package com.ebs.publisher.features.publisher.models;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Subscription {
-    private Map<String, String> info = new HashMap<>();
+    private Map<String, String> info = new LinkedHashMap<>();
     private List<String> operator = new ArrayList<>();
 
     public Subscription() {
