@@ -1,6 +1,6 @@
 package com.ebs.publisher.features.publisher;
 
-import com.ebs.publisher.features.publisher.algorithm.PubSubAlgorithm;
+import com.ebs.publisher.features.publisher.algorithm.PubSubGenerationAlgorithm;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -15,22 +15,21 @@ public class PublisherService {
                                                           int dateRate, boolean isParallel) {
 
         Instant start = Instant.now();
-        PubSubAlgorithm pubSubAlgorithm = new PubSubAlgorithm();
+        PubSubGenerationAlgorithm pubSubGenerationAlgorithm = new PubSubGenerationAlgorithm();
 
-        pubSubAlgorithm.init(numberOfSubs, numberOfPubs, cityRate, tempRate, rainRate, windRate,
+        pubSubGenerationAlgorithm.init(numberOfSubs, numberOfPubs, cityRate, tempRate, rainRate, windRate,
                 directionRate, dateRate, isParallel);
 
-        pubSubAlgorithm.generatePublications();
-        var subLogs = pubSubAlgorithm.generateSubscriptions();
+        pubSubGenerationAlgorithm.generatePublications();
+        var subLogs = pubSubGenerationAlgorithm.generateSubscriptions();
 
-        pubSubAlgorithm.createFilesContainingPubsAndSubs();
+        pubSubGenerationAlgorithm.createFilesContainingPubsAndSubs();
 
         Instant end = Instant.now();
 
         Duration duration = Duration.between(start, end);
         long resultTimeMillis = duration.toMillis();
-        System.out.println("Generation took " + resultTimeMillis + " ms");
-      //  log.info("Generation took {} ms", resultTimeMillis);
+        log.info("Generation took {} ms", resultTimeMillis);
 
         return new PublisherRunResultDto(
                 isParallel ? "PARALLEL" : "NON-PARALLEL",

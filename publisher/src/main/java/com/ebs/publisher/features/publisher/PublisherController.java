@@ -11,12 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/publish")
+@RequiredArgsConstructor
 public class PublisherController {
 
     private final PublisherService publisherService;
-    public PublisherController(PublisherService publisherService) {
-        this.publisherService = publisherService;
-    }
+
     @PostMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PublisherRunResultDto> runNonParallelMessageGeneration(
             @RequestParam("numberOfSubs") int numberOfSubs,

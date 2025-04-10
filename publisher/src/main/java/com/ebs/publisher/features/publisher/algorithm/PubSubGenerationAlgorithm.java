@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 @Slf4j
-public class PubSubAlgorithm {
+public class PubSubGenerationAlgorithm {
     private int numberOfSubs;
     private int numberOfPubs;
     private int cityRate;
@@ -36,7 +36,7 @@ public class PubSubAlgorithm {
     private List<Subscription> generatedSubscriptions;
     private List<Publication> generatedPublications;
 
-    public PubSubAlgorithm() {
+    public PubSubGenerationAlgorithm() {
         this.numberOfSubs = 300;
         this.numberOfPubs = 300;
         this.cityRate = 90;
@@ -142,7 +142,7 @@ public class PubSubAlgorithm {
                             sub.getInfo().keySet().forEach(key -> {
                                 if (!randSub.getInfo().containsKey(key)) {
                                     randSub.addInfo(key, sub.getInfo().get(key));
-                                    randSub.addOperator(sub.getOperator().get(0));
+                                    randSub.addOperator(computeOperatorForKey(sub.getOperator().get(0), key));
                                     okFlag.set(true);
                                 }
                             });
@@ -151,6 +151,19 @@ public class PubSubAlgorithm {
                 });
             }
         });
+    }
+
+    private String computeOperatorForKey(String operator, String key) {
+        Random random = new Random();
+        if (key.equals("city") || key.equals("direction")) {
+            if (operator.equals("=") || operator.equals("!=")) {
+                return operator;
+            }
+            int randomEqOperator = random.nextInt(2);
+            return randomEqOperator == 0 ? "=" : "!=";
+        }
+
+        return operator;
     }
 
     private List<String> generateSubscriptionStats(int totalSubs) {
@@ -163,7 +176,7 @@ public class PubSubAlgorithm {
                     .count();
             String msg = String.format("Number of subs containing the %s field: %d -> %.2f%%",
                     key, count, (double) count / totalSubs * 100);
-            System.out.println(msg);
+            log.info(msg);
             messages.add(msg);
         }
 
@@ -234,8 +247,7 @@ public class PubSubAlgorithm {
                 }
             }
         } catch (IOException ex) {
-            System.out.println("Failed to create files for created entities: {}" + ex.getMessage());
-          //  log.error("Failed to create files for created entities: {}", ex.getMessage());
+          log.error("Failed to create files for created entities: {}", ex.getMessage());
         }
     }
 
