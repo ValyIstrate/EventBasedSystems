@@ -113,7 +113,7 @@ public class PubSubGenerationAlgorithm {
     }
 
     private void generateNonParallelPublications() {
-        for (int i = 0; i <= numberOfPubs; i++) {
+        for (int i = 0; i < numberOfPubs; i++) {
             generatedPublications.add(new Publication());
         }
     }
