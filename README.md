@@ -1,7 +1,8 @@
 # EventBasedSystems
 This repository will contain the Project for the EBS class (2025)
 
-Tests: 
+Tests:
+
 Ran on: Ubuntu 24.04.2 LTS, Core i5-10300H 2.50 GHz
 
 ## Non-Parallel
