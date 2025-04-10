@@ -154,13 +154,12 @@ public class PubSubGenerationAlgorithm {
     }
 
     private String computeOperatorForKey(String operator, String key) {
-        Random random = new Random();
         if (key.equals("city") || key.equals("direction")) {
             if (operator.equals("=") || operator.equals("!=")) {
                 return operator;
             }
-            int randomEqOperator = random.nextInt(2);
-            return randomEqOperator == 0 ? "=" : "!=";
+
+            return "=";
         }
 
         return operator;
