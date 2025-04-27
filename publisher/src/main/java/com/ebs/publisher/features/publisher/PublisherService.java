@@ -1,7 +1,10 @@
 package com.ebs.publisher.features.publisher;
 
 import com.ebs.publisher.features.publisher.algorithm.PubSubGenerationAlgorithm;
+import com.ebs.publisher.features.publisher.aws.messaging.sender.PubSubSender;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -9,7 +12,11 @@ import java.time.Instant;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class PublisherService {
+
+    private final PubSubSender pubSubSender;
+
     public PublisherRunResultDto runGeneration(int numberOfSubs, int numberOfPubs, int cityRate,
                                                           int tempRate, int rainRate, int windRate, int directionRate,
                                                           int dateRate, boolean isParallel) {
@@ -36,5 +43,22 @@ public class PublisherService {
                 subLogs,
                 String.valueOf(resultTimeMillis)
         );
+    }
+
+    @Scheduled(fixedRate = 10000)
+    public void runGeneration() {
+        PubSubGenerationAlgorithm pubSubGenerationAlgorithm = new PubSubGenerationAlgorithm();
+
+        pubSubGenerationAlgorithm.init(10, 1000, 90, 50, 30, 30,
+                25, 100, false);
+
+        pubSubGenerationAlgorithm.generatePublications();
+        pubSubGenerationAlgorithm.generateSubscriptions();
+
+        pubSubGenerationAlgorithm.getGeneratedPublications()
+                .forEach(pubSubSender::sendMessage);
+
+        pubSubGenerationAlgorithm.getGeneratedSubscriptions()
+                .forEach(pubSubSender::sendMessage);
     }
 }

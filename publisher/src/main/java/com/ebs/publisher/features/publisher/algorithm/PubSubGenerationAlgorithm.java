@@ -5,6 +5,7 @@ import com.ebs.publisher.features.publisher.models.Subscription;
 import com.ebs.publisher.features.publisher.utils.Utils;
 import com.ebs.publisher.features.publisher.workers.PublisherGeneratorThread;
 import com.ebs.publisher.features.publisher.workers.SubscriptionGenerator;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedWriter;
@@ -19,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 @Slf4j
+@Getter
 public class PubSubGenerationAlgorithm {
     private int numberOfSubs;
     private int numberOfPubs;

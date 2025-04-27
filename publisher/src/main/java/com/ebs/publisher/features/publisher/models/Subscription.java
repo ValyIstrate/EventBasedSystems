@@ -1,5 +1,7 @@
 package com.ebs.publisher.features.publisher.models;
 
+import com.ebs.publisher.features.publisher.proto_classes.SubscriptionProto;
+
 import java.util.*;
 
 public class Subscription {
@@ -39,5 +41,12 @@ public class Subscription {
 
         sb.append("}\n");
         return sb.toString();
+    }
+
+    public SubscriptionProto.SubProto buildProto() {
+        SubscriptionProto.SubProto.Builder proto = SubscriptionProto.SubProto.newBuilder();
+        proto.addAllOperator(this.operator);
+        proto.putAllInfo(this.info);
+        return proto.build();
     }
 }
