@@ -2,28 +2,36 @@ package com.ebs.publisher.features.publisher.aws.config;
 
 import io.awspring.cloud.sqs.config.SqsBootstrapConfiguration;
 import io.awspring.cloud.sqs.config.SqsMessageListenerContainerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
+import java.net.URI;
+
 @Import(SqsBootstrapConfiguration.class)
 @Configuration
 public class AwsConfig {
-    private static final String awsRegion = "eu-central-1";
+
+    @Value("${aws.sqs.region}")
+    private String awsRegion;
 
     @Bean
     @ConditionalOnMissingBean(SqsClient.class)
     public SqsClient sqsClient() {
         return SqsClient.builder()
                 .region(Region.of(awsRegion))
-                .credentialsProvider(DefaultCredentialsProvider.create())
+                .endpointOverride(URI.create("http://localhost:4566"))
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create("dummy", "dummy")))
                 .build();
     }
 
@@ -31,7 +39,9 @@ public class AwsConfig {
     public SqsAsyncClient sqsAsyncClient() {
         return SqsAsyncClient.builder()
                 .region(Region.of(awsRegion))
-                .credentialsProvider(DefaultCredentialsProvider.create())
+                .endpointOverride(URI.create("http://localhost:4566"))
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create("dummy", "dummy")))
                 .build();
     }
 

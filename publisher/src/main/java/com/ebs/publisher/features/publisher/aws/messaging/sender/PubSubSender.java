@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
+import java.util.Base64;
+
 @Slf4j
 @Service
 public class PubSubSender extends BaseSender {
@@ -43,21 +45,41 @@ public class PubSubSender extends BaseSender {
         super(sqsClient);
     }
 
+//    public void sendMessage(Object pubOrSub) {
+//        try {
+//            if (pubOrSub instanceof Publication) {
+//                MessageProto.MsgProto pubMessage = buildPublicationMessage((Publication) pubOrSub);
+//                String serializedMessage = PROTOBUF_MAPPER.writeValueAsString(pubMessage);
+//                sendMessage(allBrokerQueueName, serializedMessage);
+//            }  else if (pubOrSub instanceof Subscription) {
+//                MessageProto.MsgProto subMessage = buildSubscriptionMessage((Subscription) pubOrSub);
+//                String serializedMessage = PROTOBUF_MAPPER.writeValueAsString(subMessage);
+//                sendMessage(allBrokerQueueName, serializedMessage);
+//            } else {
+//                log.error("Unrecognized object type {}", pubOrSub.getClass());
+//            }
+//        } catch (JsonProcessingException ex) {
+//            log.error("The pub/sub message cannot be serialized as string! -> {}", ex.getMessage());
+//        }
+//    }
+
     public void sendMessage(Object pubOrSub) {
         try {
+            MessageProto.MsgProto message = null;
+
             if (pubOrSub instanceof Publication) {
-                MessageProto.MsgProto pubMessage = buildPublicationMessage((Publication) pubOrSub);
-                String serializedMessage = PROTOBUF_MAPPER.writeValueAsString(pubMessage);
-                sendMessage(allBrokerQueueName, serializedMessage);
-            }  else if (pubOrSub instanceof Subscription) {
-                MessageProto.MsgProto subMessage = buildSubscriptionMessage((Subscription) pubOrSub);
-                String serializedMessage = PROTOBUF_MAPPER.writeValueAsString(subMessage);
-                sendMessage(allBrokerQueueName, serializedMessage);
+                message = buildPublicationMessage((Publication) pubOrSub);
+            } else if (pubOrSub instanceof Subscription) {
+                message = buildSubscriptionMessage((Subscription) pubOrSub);
             } else {
                 log.error("Unrecognized object type {}", pubOrSub.getClass());
+                return;
             }
-        } catch (JsonProcessingException ex) {
-            log.error("The pub/sub message cannot be serialized as string! -> {}", ex.getMessage());
+            byte[] protoBytes = message.toByteArray();
+            String base64EncodedMessage = Base64.getEncoder().encodeToString(protoBytes);
+            sendMessage(allBrokerQueueName, base64EncodedMessage);
+        } catch (Exception ex) {
+            log.error("Failed to serialize or send Protobuf message: {}", ex.getMessage(), ex);
         }
     }
 }
