@@ -1,0 +1,10 @@
+syntax = "proto3";
+package publisher;
+
+option java_package = "ebs.project.proto_classes";
+option java_outer_classname = "SubscriptionProto";
+
+message SubProto {
+  map<string, string> info = 1;
+  repeated string operator = 2;
+}

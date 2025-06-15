@@ -1,0 +1,15 @@
+syntax = "proto3";
+package publisher;
+
+option java_package = "ebs.project.proto_classes";
+option java_outer_classname = "PublicationProto";
+
+message PubProto {
+  int64 stationId = 1;
+  string city = 2;
+  int64 temperature = 3;
+  double rainProbability = 4;
+  int64  windSpeed = 5;
+  string direction = 6;
+  string date = 7;
+}
