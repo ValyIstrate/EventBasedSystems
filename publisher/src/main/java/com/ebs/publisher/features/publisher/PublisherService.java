@@ -49,7 +49,7 @@ public class PublisherService {
     public void runGeneration() {
         PubSubGenerationAlgorithm pubSubGenerationAlgorithm = new PubSubGenerationAlgorithm();
 
-        pubSubGenerationAlgorithm.init(10, 1000, 90, 50, 30, 30,
+        pubSubGenerationAlgorithm.init(1, 10, 90, 50, 30, 30,
                 25, 100, false);
 
         pubSubGenerationAlgorithm.generatePublications();
