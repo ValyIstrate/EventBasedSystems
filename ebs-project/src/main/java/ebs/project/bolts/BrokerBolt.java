@@ -1,7 +1,5 @@
 package ebs.project.bolts;
 
-import ebs.project.proto_classes.MessageProto;
-import ebs.project.proto_classes.PublicationProto;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -10,8 +8,14 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
+import ebs.project.proto_classes.PublicationProto;
+import ebs.project.proto_classes.MessageProto;
+
 
 public class BrokerBolt extends BaseRichBolt {
     private OutputCollector collector;
@@ -68,7 +72,7 @@ public class BrokerBolt extends BaseRichBolt {
         Long temp = input.getLongByField("temp");
         Long wind = input.getLongByField("wind");
         Double rain = input.getDoubleByField("rain");
-
+        long emissionTime = input.getLongByField("emissionTime");
         Map<String, Object> pubFields = Map.of(
                 "stationId", stationId,
                 "city", city,
@@ -87,7 +91,7 @@ public class BrokerBolt extends BaseRichBolt {
                 for (Map<String, Map<Object, String>> sub : subs) {
                     if (foundMatch(sub, pubFields)) {
                         collector.emit("notification-stream",
-                                new Values(subId, stationId, city, date, direction, temp, rain, wind));
+                                new Values(subId, stationId, city, date, direction, temp, rain, wind, emissionTime));
                         matchedPublicationsNumber++;
                         suchSubFound = true;
                         break;
@@ -128,6 +132,7 @@ public class BrokerBolt extends BaseRichBolt {
     private void handleMessageReadFromQueue(Tuple input, String streamType) {
         try {
             String base64EncodedMessage = input.getStringByField("message");
+
             byte[] protoBytes = Base64.getDecoder().decode(base64EncodedMessage);
             MessageProto.MsgProto msgProto = MessageProto.MsgProto.parseFrom(protoBytes);
 
@@ -185,19 +190,19 @@ public class BrokerBolt extends BaseRichBolt {
         Long temp = publication.getTemperature();
         Long wind = publication.getWindSpeed();
         Double rain = publication.getRainProbability();
-
+        long emissionTime = publication.getEmissionTime();
         collector.emit("decoded-stream",
-                new Values(stationId, city, date, direction, temp, rain, wind));
+                new Values(stationId, city, date, direction, temp, rain, wind, emissionTime));
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream("notification-stream",
-                new Fields("subscriberId", "stationId", "city", "date", "direction", "temp", "rain", "wind"));
+                new Fields("subscriberId", "stationId", "city", "date", "direction", "temp", "rain", "wind", "emissionTime"));
         outputFieldsDeclarer.declareStream("subscription-stream",
                 new Fields("subscriberId", "city", "date", "direction", "temp", "rain", "wind"));
         outputFieldsDeclarer.declareStream("decoded-stream",
-                new Fields("stationId", "city", "date", "direction", "temp", "rain", "wind"));
+                new Fields("stationId", "city", "date", "direction", "temp", "rain", "wind", "emissionTime"));
     }
 
     private boolean compareStrings(Object pubFieldValue, Object subFieldValue, String operator) {
@@ -248,5 +253,18 @@ public class BrokerBolt extends BaseRichBolt {
             case "!=" -> (!pubDate.isEqual(subDate));
             default -> false;
         };
+    }
+
+    @Override
+    public void cleanup() {
+
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new FileWriter("results/stats/" + this.brokerId + ".txt"))) {
+            writer.write("Publications received: " + receivedPublicationsNumber);
+            writer.newLine();
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
     }
 }

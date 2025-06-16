@@ -1,11 +1,11 @@
 syntax = "proto3";
-package publisher;
+package ebs.project.proto_classes;
 
 option java_package = "ebs.project.proto_classes";
 option java_outer_classname = "MessageProto";
 
-import "src/main/java/ebs/project/proto_files/pub.proto";
-import "src/main/java/ebs/project/proto_files/sub.proto";
+import "pub.proto";
+import "sub.proto";
 
 message MsgProto {
   string messageType = 1;

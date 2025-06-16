@@ -19,11 +19,13 @@ public class SubscriberBolt extends BaseRichBolt {
     private OutputCollector collector;
     private final String subscriberId;
     private List<Subscription> subscriptions;
+    private long totalLatency;
     private int receivedPubs = 0;
     private String filename;
 
     public SubscriberBolt(String subscriberId, String filename) {
         this.subscriberId = subscriberId;
+        this.totalLatency = 0L;
         this.receivedPubs = 0;
         this.filename = filename;
     }
@@ -123,6 +125,10 @@ public class SubscriberBolt extends BaseRichBolt {
         if (streamId.equals("notification-stream")) {
             receivedPubs++;
 
+            long receiveTime = System.currentTimeMillis();
+            long emissionTime = input.getLongByField("emissionTime");
+            totalLatency += (receiveTime- emissionTime);
+
             Long stationId = input.getLongByField("stationId");
             String city = input.getStringByField("city");
             String direction = input.getStringByField("direction");
@@ -146,11 +152,36 @@ public class SubscriberBolt extends BaseRichBolt {
             } catch (IOException e) {
                 System.err.println("Error writing to file: " + e.getMessage());
             }
+
+            try (BufferedWriter writer = new BufferedWriter(
+                    new FileWriter("results/publication-received-by-" + input.getStringByField("subscriberId") + ".txt",
+                            true))) {
+                writer.write(publication.toString() + " { Emission time: " + emissionTime + "} | { Receive time: " +
+                        receiveTime + " } | { Transmission time: " + (receiveTime - emissionTime) + " milliseconds }");
+                writer.newLine();
+            } catch (IOException e) {
+                System.err.println("Error writing to file: " + e.getMessage());
+            }
+
         }
     }
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream("subscription-stream",
                 new Fields("subscriberId", "city", "date", "direction", "temp", "rain", "wind"));
+    }
+
+    @Override
+    public void cleanup() {
+        if (receivedPubs > 0) {
+            try (BufferedWriter writer = new BufferedWriter(
+                    new FileWriter("results/stats/" + subscriberId + ".txt"))) {
+                writer.write("Publications received: " + receivedPubs +
+                        "\nMean latency:" + (totalLatency / receivedPubs) + " milliseconds");
+                writer.newLine();
+            } catch (IOException e) {
+                System.err.println("Error writing to file: " + e.getMessage());
+            }
+        }
     }
 }

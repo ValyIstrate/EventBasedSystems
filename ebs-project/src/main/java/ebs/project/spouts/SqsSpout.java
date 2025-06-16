@@ -1,4 +1,5 @@
 package ebs.project.spouts;
+
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -11,6 +12,10 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +24,7 @@ public class SqsSpout extends BaseRichSpout {
     private SpoutOutputCollector collector;
     private SqsClient sqsClient;
     private static final String queueUrl = "http://localhost:4566/000000000000/sqs_all_broker_queue";
+    private int sentPublicationsNumber; // Counter for sent publications
 
     @Override
     public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
@@ -29,6 +35,7 @@ public class SqsSpout extends BaseRichSpout {
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create("dummy", "dummy")))
                 .build();
+        this.sentPublicationsNumber = 0; // Initialize counter
     }
 
     @Override
@@ -41,7 +48,9 @@ public class SqsSpout extends BaseRichSpout {
 
         List<Message> messages = response.messages();
         for (Message message : messages) {
-            collector.emit(new Values(message.body()));
+            long emissionTime = System.currentTimeMillis();
+            collector.emit(new Values(message.body(),emissionTime));
+            sentPublicationsNumber++; // Increment counter
             sqsClient.deleteMessage(DeleteMessageRequest.builder()
                     .queueUrl(queueUrl)
                     .receiptHandle(message.receiptHandle())
@@ -57,6 +66,22 @@ public class SqsSpout extends BaseRichSpout {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("message"));
+        declarer.declare(new Fields("message", "emissionTime"));
+    }
+
+    @Override
+    public void close() {
+        File resultsDir = new File("results");
+        if (!resultsDir.exists()) {
+            resultsDir.mkdirs(); // Create the directory if it doesn't exist
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new FileWriter("results/publisher.txt"))) {
+            writer.write("Publications sent: " + sentPublicationsNumber);
+            writer.newLine();
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
     }
 }

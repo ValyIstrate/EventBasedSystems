@@ -1,5 +1,5 @@
 syntax = "proto3";
-package publisher;
+package ebs.project.proto_classes;
 
 option java_package = "ebs.project.proto_classes";
 option java_outer_classname = "PublicationProto";
@@ -12,4 +12,5 @@ message PubProto {
   int64  windSpeed = 5;
   string direction = 6;
   string date = 7;
+  int64 emissionTime = 8;
 }
