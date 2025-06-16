@@ -138,7 +138,8 @@ public class BrokerBolt extends BaseRichBolt {
 
             if (msgProto.getMessageType().equals("PubType")) {
                 PublicationProto.PubProto publication = msgProto.getPublication();
-                processPublication(publication);
+                Long emissionTime = input.getLongByField("emissionTime");
+                processPublication(publication, emissionTime);
             } else if (msgProto.getMessageType().equals("SubType")) {
                 // DO NOTHING
                 return;
@@ -182,7 +183,7 @@ public class BrokerBolt extends BaseRichBolt {
         collector.emit("subscription-stream", new Values(brokerId, city, date, direction, temp, rain, wind));
     }
 
-    private void processPublication(PublicationProto.PubProto publication) {
+    private void processPublication(PublicationProto.PubProto publication, Long emissionTime) {
         Long stationId = publication.getStationId();
         String city = publication.getCity();
         String date = publication.getDate();
@@ -190,7 +191,6 @@ public class BrokerBolt extends BaseRichBolt {
         Long temp = publication.getTemperature();
         Long wind = publication.getWindSpeed();
         Double rain = publication.getRainProbability();
-        long emissionTime = publication.getEmissionTime();
         collector.emit("decoded-stream",
                 new Values(stationId, city, date, direction, temp, rain, wind, emissionTime));
     }
