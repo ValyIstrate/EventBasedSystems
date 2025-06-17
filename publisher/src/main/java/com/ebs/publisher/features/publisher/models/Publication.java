@@ -1,5 +1,6 @@
 package com.ebs.publisher.features.publisher.models;
 
+import com.ebs.publisher.features.publisher.proto_classes.MessageProto;
 import com.ebs.publisher.features.publisher.proto_classes.PublicationProto;
 
 import java.time.LocalDate;
@@ -8,7 +9,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Random;
 
-public class Publication {
+import static com.ebs.publisher.features.publisher.proto_classes.MessageProto.MsgProto.MessageCase.PUBLICATION;
+
+public class Publication implements ProtobufConvertible {
 
     Integer stationId;
     String city;
@@ -53,5 +56,13 @@ public class Publication {
         proto.setDirection(this.direction);
         proto.setDate(this.date.toString());
         return proto.build();
+    }
+
+    @Override
+    public MessageProto.MsgProto toProto() {
+        var protoBuilder = MessageProto.MsgProto.newBuilder();
+        protoBuilder.setMessageType(String.valueOf(PUBLICATION));
+        protoBuilder.setPublication(this.buildProto());
+        return protoBuilder.build();
     }
 }

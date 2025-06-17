@@ -1,20 +1,20 @@
 package com.ebs.publisher.features.publisher.aws.messaging.sender;
 
-import com.ebs.publisher.features.publisher.aws.messaging.message.PubSubMessage;
+import com.ebs.publisher.features.publisher.models.ProtobufConvertible;
 import com.ebs.publisher.features.publisher.models.Publication;
 import com.ebs.publisher.features.publisher.models.Subscription;
 import com.ebs.publisher.features.publisher.proto_classes.MessageProto;
-import com.ebs.publisher.features.publisher.proto_classes.PublicationProto;
-import com.ebs.publisher.features.publisher.proto_classes.SubscriptionProto;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.protobuf.ProtobufFactory;
 import com.fasterxml.jackson.dataformat.protobuf.ProtobufMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
 
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -26,6 +26,8 @@ public class PubSubSender extends BaseSender {
     private String allBrokerQueueName;
 
     private static final ProtobufMapper PROTOBUF_MAPPER = new ProtobufMapper(ProtobufFactory.builder().build());
+
+    private static final Base64.Encoder base64Encoder = Base64.getEncoder();
 
     public MessageProto.MsgProto buildPublicationMessage(Publication publication) {
         var protoBuilder = MessageProto.MsgProto.newBuilder();
@@ -45,41 +47,47 @@ public class PubSubSender extends BaseSender {
         super(sqsClient);
     }
 
-//    public void sendMessage(Object pubOrSub) {
-//        try {
-//            if (pubOrSub instanceof Publication) {
-//                MessageProto.MsgProto pubMessage = buildPublicationMessage((Publication) pubOrSub);
-//                String serializedMessage = PROTOBUF_MAPPER.writeValueAsString(pubMessage);
-//                sendMessage(allBrokerQueueName, serializedMessage);
-//            }  else if (pubOrSub instanceof Subscription) {
-//                MessageProto.MsgProto subMessage = buildSubscriptionMessage((Subscription) pubOrSub);
-//                String serializedMessage = PROTOBUF_MAPPER.writeValueAsString(subMessage);
-//                sendMessage(allBrokerQueueName, serializedMessage);
-//            } else {
-//                log.error("Unrecognized object type {}", pubOrSub.getClass());
+//    public void sendMessages(List<Publication> items) {
+//        items.parallelStream().forEach(item -> {
+//            try {
+//                MessageProto.MsgProto message = item.toProto();
+//                byte[] protoBytes = message.toByteArray();
+//                String base64EncodedMessage = base64Encoder.encodeToString(protoBytes);
+//                sendMessage(allBrokerQueueName, base64EncodedMessage);
+//            } catch (Exception ex) {
+//                log.error("Failed to send message: {}", ex.getMessage(), ex);
 //            }
-//        } catch (JsonProcessingException ex) {
-//            log.error("The pub/sub message cannot be serialized as string! -> {}", ex.getMessage());
-//        }
+//        });
 //    }
 
-    public void sendMessage(Object pubOrSub) {
-        try {
-            MessageProto.MsgProto message = null;
+    public void sendMessages(List<Publication> items) {
+        final int BATCH_SIZE = 10;
 
-            if (pubOrSub instanceof Publication) {
-                message = buildPublicationMessage((Publication) pubOrSub);
-            } else if (pubOrSub instanceof Subscription) {
-                message = buildSubscriptionMessage((Subscription) pubOrSub);
-            } else {
-                log.error("Unrecognized object type {}", pubOrSub.getClass());
-                return;
+        List<SendMessageBatchRequestEntry> batch = new ArrayList<>(BATCH_SIZE);
+        int messageId = 0;
+
+        for (ProtobufConvertible item : items) {
+            try {
+                MessageProto.MsgProto message = item.toProto();
+                byte[] protoBytes = message.toByteArray();
+                String base64 = Base64.getEncoder().encodeToString(protoBytes);
+
+                batch.add(SendMessageBatchRequestEntry.builder()
+                        .id(String.valueOf(messageId++))
+                        .messageBody(base64)
+                        .build());
+
+                if (batch.size() == BATCH_SIZE) {
+                    sendBatch(batch, allBrokerQueueName);
+                    batch.clear();
+                }
+            } catch (Exception ex) {
+                System.err.println("Error preparing message: " + ex.getMessage());
             }
-            byte[] protoBytes = message.toByteArray();
-            String base64EncodedMessage = Base64.getEncoder().encodeToString(protoBytes);
-            sendMessage(allBrokerQueueName, base64EncodedMessage);
-        } catch (Exception ex) {
-            log.error("Failed to serialize or send Protobuf message: {}", ex.getMessage(), ex);
+        }
+
+        if (!batch.isEmpty()) {
+            sendBatch(batch, allBrokerQueueName);
         }
     }
 }

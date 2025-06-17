@@ -49,16 +49,13 @@ public class PublisherService {
     public void runGeneration() {
         PubSubGenerationAlgorithm pubSubGenerationAlgorithm = new PubSubGenerationAlgorithm();
 
-        pubSubGenerationAlgorithm.init(0, 100, 90, 50, 30, 30,
+        pubSubGenerationAlgorithm.init(0, 556, 90, 50, 30, 30,
                 25, 100, false);
 
         pubSubGenerationAlgorithm.generatePublications();
-        pubSubGenerationAlgorithm.generateSubscriptions();
 
-        pubSubGenerationAlgorithm.getGeneratedPublications()
-                .forEach(pubSubSender::sendMessage);
+        pubSubSender.sendMessages(pubSubGenerationAlgorithm.getGeneratedPublications());
 
-        pubSubGenerationAlgorithm.getGeneratedSubscriptions()
-                .forEach(pubSubSender::sendMessage);
+        log.info("Generated {} pubs", pubSubGenerationAlgorithm.getGeneratedPublications().size());
     }
 }
