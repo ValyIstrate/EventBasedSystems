@@ -1,0 +1,3 @@
+{(city,=,"Bucharest");(avg_temp,>,8.5)}
+{(city,=,"Cluj");;(avg_wind,<=,15)}
+{(city,=,"Timisoara");(avg_temp,<,10);}

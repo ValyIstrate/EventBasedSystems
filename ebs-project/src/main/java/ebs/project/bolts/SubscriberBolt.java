@@ -84,6 +84,7 @@ public class SubscriberBolt extends BaseRichBolt {
                 String key = field.getKey();
                 Object value = field.getValue();
                 String operator = sub.getOperator().get(idx);
+                idx++;
 
                 switch (key) {
                     case "city":
@@ -148,6 +149,7 @@ public class SubscriberBolt extends BaseRichBolt {
             }
         }
     }
+
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream("subscription-stream",

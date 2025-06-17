@@ -125,6 +125,37 @@ public class BrokerBolt extends BaseRichBolt {
         return true;
     }
 
+//    private boolean foundMatch(Map<String, Map<Object, String>> sub, Map<String, Object> pubFields) {
+//        for (var entry : sub.entrySet()) {
+//            var subFieldName = entry.getKey();
+//            var subFieldMap = entry.getValue();
+//
+//            Object pubFieldValue = pubFields.get(subFieldName);
+//
+//            if (Objects.nonNull(pubFieldValue) && !subFieldMap.isEmpty()) {
+//                for (var field : subFieldMap.entrySet()) {
+//                    Object subFieldValue = field.getKey();
+//                    String operator = field.getValue();
+//
+//                    boolean result = switch (subFieldName) {
+//                        case "city", "direction" -> compareStrings(pubFieldValue, subFieldValue, operator);
+//                        case "date" -> compareDates(pubFieldValue, subFieldValue, operator);
+//                        case "temp", "wind" -> compareLongs(pubFieldValue, subFieldValue, operator);
+//                        case "rain" -> compareDoubles(pubFieldValue, subFieldValue, operator);
+//                        default -> throw new RuntimeException("Unknown field: " + subFieldName);
+//                    };
+//
+//                    if (!result) {
+//                        return false;
+//                    }
+//                }
+//            } else {
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
+
     private void handleMessageReadFromQueue(Tuple input, String streamType) {
         try {
             String base64EncodedMessage = input.getStringByField("message");
