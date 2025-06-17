@@ -9,6 +9,7 @@ import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -289,7 +290,10 @@ public class BrokerBolt extends BaseRichBolt {
     @Override
     public void cleanup() {
 
-
+        File resultsDir = new File("results/stats");
+        if (!resultsDir.exists()) {
+            resultsDir.mkdirs();
+        }
         try (BufferedWriter writer = new BufferedWriter(
                 new FileWriter("results/stats/" + this.brokerId + ".txt"))) {
             writer.write("Publications received: " + receivedPublicationsNumber);

@@ -17,13 +17,13 @@ public class App {
         TopologyBuilder builder = new TopologyBuilder();
 
         // simple subscribers
-        var subscriber1 = new SubscriberBolt("sb1", "src/main/java/ebs/project/subscription_files/s1.txt");
-        var subscriber2 = new SubscriberBolt("sb2", "src/main/java/ebs/project/subscription_files/s2.txt");
+        var subscriber1 = new SubscriberBolt("sb1", "D:\\projs\\faculta\\EBS\\EventBasedSystems\\ebs-project\\src\\main\\java\\ebs\\project\\subscription_files\\s1.txt");
+        var subscriber2 = new SubscriberBolt("sb2", "D:\\projs\\faculta\\EBS\\EventBasedSystems\\ebs-project\\src\\main\\java\\ebs\\project\\subscription_files\\s2.txt");
 
         // complex subscriber
         var complexSubscriber1 = new ComplexSubscriberBolt("csb1", "src/main/java/ebs/project/subscription_files/cs1.txt");
 
-        builder.setSpout("sqs-spout", new SqsSpout());
+        builder.setSpout("sqs-spout", new SqsSpout(), 2);
 
         builder.setBolt("decoder-bolt", new BrokerBolt("db"), 1)
                 .shuffleGrouping("sqs-spout");
@@ -58,14 +58,14 @@ public class App {
 
         Config config = new Config();
         config.setDebug(true);
-        config.setNumWorkers(3);
+        config.setNumWorkers(6);
         config.put(Config.STORM_ZOOKEEPER_SERVERS, Arrays.asList("localhost"));
         config.put(Config.STORM_ZOOKEEPER_PORT, 2181);
 
         LocalCluster cluster = new LocalCluster();
         cluster.submitTopology("sqs-reader-topology", config, builder.createTopology());
 
-        Thread.sleep(60000);
+        Thread.sleep(190000);
         cluster.shutdown();
     }
 }
