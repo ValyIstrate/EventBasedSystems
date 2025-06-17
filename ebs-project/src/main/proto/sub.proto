@@ -1,5 +1,5 @@
 syntax = "proto3";
-package publisher;
+package ebs.project.proto_classes;
 
 option java_package = "ebs.project.proto_classes";
 option java_outer_classname = "SubscriptionProto";
