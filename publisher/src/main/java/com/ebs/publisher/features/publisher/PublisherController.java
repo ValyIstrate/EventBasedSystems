@@ -11,15 +11,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/publish")
-
+@RequiredArgsConstructor
 public class PublisherController {
 
     private final PublisherService publisherService;
-
-    // Manually added constructor
-    public PublisherController(PublisherService publisherService) {
-        this.publisherService = publisherService;
-    }
 
     @PostMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PublisherRunResultDto> runNonParallelMessageGeneration(

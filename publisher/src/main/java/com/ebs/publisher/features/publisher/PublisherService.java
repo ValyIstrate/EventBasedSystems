@@ -7,22 +7,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class PublisherService {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PublisherService.class);
     private final PubSubSender pubSubSender;
-
-    public PublisherService (PubSubSender pubSubSender) {
-        this.pubSubSender = pubSubSender;
-    }
 
     public PublisherRunResultDto runGeneration(int numberOfSubs, int numberOfPubs, int cityRate,
                                                           int tempRate, int rainRate, int windRate, int directionRate,
@@ -60,24 +53,9 @@ public class PublisherService {
                 25, 100, false);
 
         pubSubGenerationAlgorithm.generatePublications();
-       // pubSubGenerationAlgorithm.generateSubscriptions();
 
-        // Save generated publications to a file
-//        try {
-//            List<String> publications = pubSubGenerationAlgorithm.getGeneratedPublications()
-//                    .stream()
-//                    .map(Object::toString) // Assuming `toString()` provides a readable representation
-//                    .toList();
-//
-//            Files.write(Paths.get("generated_publications.txt"), publications);
-//        } catch (IOException e) {
-//            log.error("Failed to save publications to file", e);
-//        }
         pubSubSender.sendMessages(pubSubGenerationAlgorithm.getGeneratedPublications());
 
-
         log.info("Generated {} pubs", pubSubGenerationAlgorithm.getGeneratedPublications().size());
-       // pubSubGenerationAlgorithm.getGeneratedSubscriptions()
-          //      .forEach(pubSubSender::sendMessage);
     }
 }
