@@ -14,6 +14,16 @@ Ran on: Ubuntu 24.04.2 LTS, Core i5-10300H 2.50 GHz
 
 # Technical Report
 
+## Setup
+
+13th Gen Intel(R) Core(TM) i7-1360P
+
+Windows11
+
+40 GB Ram
+
+## Results
+
 Publications sent: 2360
 
 Publications received: 2143
@@ -23,6 +33,8 @@ Mean latency:1862 milliseconds
 Publications received: 437
 
 Mean latency:12 milliseconds
+
+
 
 # Topology 
 
