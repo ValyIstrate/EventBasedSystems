@@ -20,10 +20,8 @@ public class App {
         var subscriber1 = new SubscriberBolt("sb1", "src/main/java/ebs/project/subscription_files/s1.txt");
         var subscriber2 = new SubscriberBolt("sb2", "src/main/java/ebs/project/subscription_files/s2.txt");
 
-        // complex subscribers
+        // complex subscriber
         var complexSubscriber1 = new ComplexSubscriberBolt("csb1", "src/main/java/ebs/project/subscription_files/cs1.txt");
-        // var complexSubscriber2 = new ComplexSubscriberBolt("csb2", "src/main/java/ebs/project/subscription_files/cs2.txt");
-        // var complexSubscriber3 = new ComplexSubscriberBolt("csb3", "src/main/java/ebs/project/subscription_files/cs3.txt");
 
         builder.setSpout("sqs-spout", new SqsSpout());
 
@@ -45,7 +43,7 @@ public class App {
                 .fieldsGrouping("subscriber-bolt-2", "subscription-stream", new Fields("subscriberId"));
 
         // broker for complex subscriptions (tumbling window)
-        builder.setBolt("tumbling-broker-bolt", new TumblingBrokerBolt(), 1)
+        builder.setBolt("tumbling-broker-bolt", new TumblingBrokerBolt("tb1"), 1)
                 .shuffleGrouping("decoder-bolt", "decoded-stream")
                 .fieldsGrouping("complex-subscriber-bolt", "subscription-stream", new Fields("subscriberId"));
 

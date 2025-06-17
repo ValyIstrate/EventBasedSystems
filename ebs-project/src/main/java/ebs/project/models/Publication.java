@@ -1,7 +1,6 @@
 package ebs.project.models;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public class Publication {
 
@@ -52,20 +51,20 @@ public class Publication {
     }
 
     public String getCity() {
-    return city;
-}
+        return city;
+    }
 
-public Long getTemperature() {
-    return temperature;
-}
+    public Long getTemperature() {
+        return temperature;
+    }
 
-public Double getRainProbability() {
-    return rainProbability;
-}
+    public Double getRainProbability() {
+        return rainProbability;
+    }
 
-public Long getWindSpeed() {
-    return windSpeed;
-}
+    public Long getWindSpeed() {
+        return windSpeed;
+    }
 
 
 }
