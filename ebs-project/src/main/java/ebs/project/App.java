@@ -65,7 +65,7 @@ public class App {
         LocalCluster cluster = new LocalCluster();
         cluster.submitTopology("sqs-reader-topology", config, builder.createTopology());
 
-        Thread.sleep(60000);
+        Thread.sleep(200000);
         cluster.shutdown();
     }
 }

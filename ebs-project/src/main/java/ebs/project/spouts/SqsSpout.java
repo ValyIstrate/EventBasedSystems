@@ -42,25 +42,27 @@ public class SqsSpout extends BaseRichSpout {
     public void nextTuple() {
         ReceiveMessageResponse response = sqsClient.receiveMessage(ReceiveMessageRequest.builder()
                 .queueUrl(queueUrl)
-                .maxNumberOfMessages(1)
-                .waitTimeSeconds(1)
+                .maxNumberOfMessages(10)
+                .waitTimeSeconds(10)
                 .build());
 
         List<Message> messages = response.messages();
-        for (Message message : messages) {
-            long emissionTime = System.currentTimeMillis();
-            collector.emit(new Values(message.body(),emissionTime));
-            sentPublicationsNumber++; // Increment counter
-            sqsClient.deleteMessage(DeleteMessageRequest.builder()
-                    .queueUrl(queueUrl)
-                    .receiptHandle(message.receiptHandle())
-                    .build());
-        }
-
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        if (!messages.isEmpty()) {
+            for (Message message : messages) {
+                long emissionTime = System.currentTimeMillis();
+                collector.emit(new Values(message.body(), emissionTime));
+                sentPublicationsNumber++;
+                sqsClient.deleteMessage(DeleteMessageRequest.builder()
+                        .queueUrl(queueUrl)
+                        .receiptHandle(message.receiptHandle())
+                        .build());
+            }
+        } else {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -73,7 +75,7 @@ public class SqsSpout extends BaseRichSpout {
     public void close() {
         File resultsDir = new File("results");
         if (!resultsDir.exists()) {
-            resultsDir.mkdirs(); // Create the directory if it doesn't exist
+            resultsDir.mkdirs();
         }
 
         try (BufferedWriter writer = new BufferedWriter(

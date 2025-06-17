@@ -16,7 +16,6 @@ import java.util.*;
 import ebs.project.proto_classes.PublicationProto;
 import ebs.project.proto_classes.MessageProto;
 
-
 public class BrokerBolt extends BaseRichBolt {
     private OutputCollector collector;
     private Map<String, List<Map<String, Map<Object, String>>>> subsMap;
@@ -24,6 +23,8 @@ public class BrokerBolt extends BaseRichBolt {
 
     private int receivedPublicationsNumber;
     private int matchedPublicationsNumber;
+
+    private static final Base64.Decoder base64Encoder = Base64.getDecoder();
 
     public BrokerBolt(String brokerId) {
         this.brokerId = brokerId;
@@ -164,14 +165,14 @@ public class BrokerBolt extends BaseRichBolt {
         try {
             String base64EncodedMessage = input.getStringByField("message");
 
-            byte[] protoBytes = Base64.getDecoder().decode(base64EncodedMessage);
+            byte[] protoBytes = base64Encoder.decode(base64EncodedMessage);
             MessageProto.MsgProto msgProto = MessageProto.MsgProto.parseFrom(protoBytes);
 
-            if (msgProto.getMessageType().equals("PubType")) {
+            if (msgProto.getMessageType().equals("PUBLICATION")) {
                 PublicationProto.PubProto publication = msgProto.getPublication();
                 Long emissionTime = input.getLongByField("emissionTime");
                 processPublication(publication, emissionTime);
-            } else if (msgProto.getMessageType().equals("SubType")) {
+            } else if (msgProto.getMessageType().equals("SUBSCRIPTION")) {
                 // DO NOTHING
                 return;
             }
