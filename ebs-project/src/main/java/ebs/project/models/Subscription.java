@@ -1,8 +1,9 @@
-package com.ebs.publisher.features.publisher.models;
+package ebs.project.models;
 
-import com.ebs.publisher.features.publisher.proto_classes.SubscriptionProto;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Subscription {
     private Map<String, String> info = new LinkedHashMap<>();
@@ -19,8 +20,7 @@ public class Subscription {
         this.info.put(metaInfo, value);
     }
 
-    public void addOperator(String operator)
-    {
+    public void addOperator(String operator) {
         this.operator.add(operator);
     }
 
@@ -41,12 +41,5 @@ public class Subscription {
 
         sb.append("}\n");
         return sb.toString();
-    }
-
-    public SubscriptionProto.SubProto buildProto() {
-        SubscriptionProto.SubProto.Builder proto = SubscriptionProto.SubProto.newBuilder();
-        proto.addAllOperator(this.operator);
-        proto.putAllInfo(this.info);
-        return proto.build();
     }
 }

@@ -1,0 +1,3 @@
+Subscription{(city,=,Cluj);}
+
+Subscription{(city,=,Timisoara);(rain,<=,46.28873628759913);}

@@ -1,12 +1,17 @@
 package com.ebs.publisher.features.publisher.models;
 
+import com.ebs.publisher.features.publisher.proto_classes.MessageProto;
+import com.ebs.publisher.features.publisher.proto_classes.PublicationProto;
+
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Random;
 
-public class Publication {
+import static com.ebs.publisher.features.publisher.proto_classes.MessageProto.MsgProto.MessageCase.PUBLICATION;
+
+public class Publication implements ProtobufConvertible {
 
     Integer stationId;
     String city;
@@ -39,5 +44,25 @@ public class Publication {
     public String toString() {
         return String.format("{(stationId,%s);(city,%s);(temp,%s);(rain,%s);(wind,%s);(direction,%s);(date,%s)}",
                 stationId, city, temperature, rainProbability, windSpeed, direction, date);
+    }
+
+    public PublicationProto.PubProto buildProto() {
+        PublicationProto.PubProto.Builder proto = PublicationProto.PubProto.newBuilder();
+        proto.setStationId(this.stationId);
+        proto.setCity(this.city);
+        proto.setTemperature(this.temperature);
+        proto.setRainProbability(this.rainProbability);
+        proto.setWindSpeed(this.windSpeed);
+        proto.setDirection(this.direction);
+        proto.setDate(this.date.toString());
+        return proto.build();
+    }
+
+    @Override
+    public MessageProto.MsgProto toProto() {
+        var protoBuilder = MessageProto.MsgProto.newBuilder();
+        protoBuilder.setMessageType(String.valueOf(PUBLICATION));
+        protoBuilder.setPublication(this.buildProto());
+        return protoBuilder.build();
     }
 }

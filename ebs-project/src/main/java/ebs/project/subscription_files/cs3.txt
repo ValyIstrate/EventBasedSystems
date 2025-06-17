@@ -1,0 +1,2 @@
+{(city,=,"Constanta");(avg_temp,>,10.0);(avg_wind,<=,11)}
+{(city,=,"Brasov");(avg_temp,>,5.0);(avg_wind,<=,16)} 

@@ -1,0 +1,2 @@
+{(city,=,"Iasi");(avg_temp,>,9.0);(avg_wind,<=,12)}
+{(city,=,"Timisoara");(avg_temp,>,6.5);(avg_wind,<=,14)} 

@@ -1,0 +1,16 @@
+syntax = "proto3";
+package ebs.project.proto_classes;
+
+option java_package = "ebs.project.proto_classes";
+option java_outer_classname = "MessageProto";
+
+import "pub.proto";
+import "sub.proto";
+
+message MsgProto {
+  string messageType = 1;
+  oneof message {
+    SubProto subscription = 2;
+    PubProto publication = 3;
+  }
+}

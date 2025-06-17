@@ -1,0 +1,5 @@
+Subscription{(city,=,Timisoara);(date,<=,2024-12-10);}
+
+Subscription{(city,=,Cluj);(rain,<,95.85536549760556);(wind,<,5);}
+
+Subscription{(city,=,Iasi);(temp,<,27);}
